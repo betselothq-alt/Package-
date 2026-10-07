@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>HMA Astra — Club Operations</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#050505;color:#f5f5f5;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer}.glass{background:rgba(15,15,15,.82);backdrop-filter:blur(18px)}
+::-webkit-scrollbar{width:7px}::-webkit-scrollbar-track{background:#050505}::-webkit-scrollbar-thumb{background:#333;border-radius:99px}
+.star{position:fixed;width:2px;height:2px;background:#fff;border-radius:50%;opacity:.5;animation:twinkle 3s infinite ease-in-out;pointer-events:none}
+@keyframes twinkle{50%{opacity:.1;transform:scale(.6)}}
+.fade{animation:fade .25s ease}@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.badge{border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.05)}
+.card{border:1px solid rgba(255,255,255,.12);background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018))}
+input,select,textarea{width:100%;background:#0b0b0b;border:1px solid #2a2a2a;border-radius:13px;padding:12px 13px;color:#fff;outline:none}
+input:focus,select:focus,textarea:focus{border-color:#777;box-shadow:0 0 0 3px rgba(255,255,255,.05)}
+.primary{background:#fff;color:#000;border:1px solid #fff}.primary:hover{background:#ddd}.secondary{background:#111;border:1px solid #333}.secondary:hover{background:#191919}
+.navactive{background:#fff;color:#000}.navidle{color:#999}.navidle:hover{color:#fff;background:#111}
+.stat{min-height:118px}.modalbg{background:rgba(0,0,0,.78);backdrop-filter:blur(12px)}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:1px solid #222;border-left:1px solid #222}
+.calcell{min-height:110px;border-right:1px solid #222;border-bottom:1px solid #222;padding:8px}
+@media(max-width:700px){.calcell{min-height:80px;padding:5px}.cal-event{font-size:9px}.desktop-only{display:none}}
+</style>
+</head>
+<body>
+<div id="stars"></div>
+
+<!-- AUTH -->
+<section id="auth" class="min-h-screen flex items-center justify-center p-5">
+  <div class="w-full max-w-5xl grid lg:grid-cols-2 gap-5">
+    <div class="hidden lg:flex card rounded-3xl p-10 min-h-[650px] flex-col justify-between">
+      <div>
+        <div class="w-14 h-14 rounded-2xl bg-white text-black flex items-center justify-center text-2xl font-black">✦</div>
+        <p class="text-xs uppercase tracking-[.3em] text-neutral-500 mt-7">Haile-Manas Academy</p>
+        <h1 class="text-5xl font-black tracking-tight mt-2">HMA<br>Astra.</h1>
+        <p class="text-neutral-400 mt-5 max-w-md leading-7">A single operating system for astronomy club members, officers and administrators.</p>
+      </div>
+      <div class="grid grid-cols-2 gap-3 text-sm">
+        <div class="badge rounded-2xl p-4"><b>Live</b><p class="text-neutral-500 mt-1">Supabase sync</p></div>
+        <div class="badge rounded-2xl p-4"><b>Secure</b><p class="text-neutral-500 mt-1">Role-based access</p></div>
+        <div class="badge rounded-2xl p-4"><b>Calendar</b><p class="text-neutral-500 mt-1">Programs & reminders</p></div>
+        <div class="badge rounded-2xl p-4"><b>Email</b><p class="text-neutral-500 mt-1">Welcome + notices</p></div>
+      </div>
+    </div>
+
+    <div class="card rounded-3xl p-7 md:p-9 flex flex-col justify-center">
+      <div class="text-center mb-7">
+        <div class="mx-auto w-14 h-14 rounded-2xl bg-white text-black flex items-center justify-center text-xl font-black">✦</div>
+        <h2 class="text-2xl font-black mt-4">HMA Astra Club</h2>
+        <p class="text-xs text-neutral-500 uppercase tracking-[.22em] mt-1">Member Portal</p>
+      </div>
+      <div class="grid grid-cols-2 bg-[#0a0a0a] p-1 rounded-xl mb-6">
+        <button id="loginTab" class="py-2 rounded-lg text-sm navactive" onclick="authMode('login')">Sign in</button>
+        <button id="registerTab" class="py-2 rounded-lg text-sm navidle" onclick="authMode('register')">Register</button>
+      </div>
+
+      <form id="loginForm" onsubmit="login(event)" class="space-y-4">
+        <div><label class="text-xs text-neutral-400">Email</label><input id="loginEmail" type="email" required placeholder="you@hma.edu"></div>
+        <div><label class="text-xs text-neutral-400">Password</label><input id="loginPassword" type="password" required placeholder="••••••••"></div>
+        <button class="primary w-full py-3 rounded-xl font-bold">Sign in</button>
+        <button type="button" onclick="resetPassword()" class="w-full text-xs text-neutral-400 hover:text-white">Forgot password?</button>
+      </form>
+
+      <form id="registerForm" onsubmit="register(event)" class="space-y-4 hidden">
+        <div><label class="text-xs text-neutral-400">Full name</label><input id="regName" required placeholder="Your real club name"></div>
+        <div><label class="text-xs text-neutral-400">Email</label><input id="regEmail" type="email" required placeholder="you@hma.edu"></div>
+        <div><label class="text-xs text-neutral-400">Password</label><input id="regPassword" type="password" minlength="6" required placeholder="At least 6 characters"></div>
+        <div class="badge rounded-xl p-3 text-xs text-neutral-400">New accounts are created as <b class="text-white">Member</b>. Officers/Admins are assigned by an existing administrator.</div>
+        <button class="primary w-full py-3 rounded-xl font-bold">Create account</button>
+      </form>
+
+      <div class="border-t border-white/10 mt-7 pt-6 text-center">
+        <button onclick="demoLogin()" class="text-xs text-neutral-400 hover:text-white underline">Preview the system in Demo Mode</button>
+        <p id="firebaseState" class="text-[10px] text-neutral-600 mt-3">Supabase connection: checking…</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- APP -->
+<section id="app" class="hidden min-h-screen">
+<header class="sticky top-0 z-40 glass border-b border-white/10">
+  <div class="max-w-7xl mx-auto px-4 md:px-7 h-16 flex items-center justify-between gap-4">
+    <button onclick="go('dashboard')" class="flex items-center gap-3 text-left">
+      <div class="w-9 h-9 rounded-xl bg-white text-black flex items-center justify-center font-black">✦</div>
+      <div><div class="text-sm font-black">HMA ASTRA</div><div class="text-[9px] tracking-[.22em] text-neutral-500 uppercase">Club OS</div></div>
+    </button>
+    <div class="hidden md:flex items-center gap-1 bg-[#0a0a0a] p-1 rounded-xl border border-white/10">
+      <button data-nav="dashboard" onclick="go('dashboard')" class="navactive px-3 py-2 rounded-lg text-xs">Overview</button>
+      <button data-nav="calendar" onclick="go('calendar')" class="navidle px-3 py-2 rounded-lg text-xs">Calendar</button>
+      <button data-nav="courses" onclick="go('courses')" class="navidle px-3 py-2 rounded-lg text-xs">Courses</button>
+      <button data-nav="attendance" onclick="go('attendance')" class="navidle px-3 py-2 rounded-lg text-xs">Attendance</button>
+      <button data-nav="members" onclick="go('members')" class="navidle px-3 py-2 rounded-lg text-xs">Members</button>
+      <button data-nav="admin" onclick="go('admin')" id="adminNav" class="navidle px-3 py-2 rounded-lg text-xs hidden">Admin</button>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="hidden sm:block text-right"><div id="topName" class="text-xs font-bold">Member</div><div id="topRole" class="text-[10px] text-neutral-500">Member</div></div>
+      <button onclick="logout()" class="secondary px-3 py-2 rounded-xl text-xs">Sign out</button>
+    </div>
+  </div>
+  <div class="md:hidden flex overflow-x-auto gap-1 px-3 pb-2">
+    <button data-nav="dashboard" onclick="go('dashboard')" class="navactive px-3 py-2 rounded-lg text-xs whitespace-nowrap">Overview</button>
+    <button data-nav="calendar" onclick="go('calendar')" class="navidle px-3 py-2 rounded-lg text-xs whitespace-nowrap">Calendar</button>
+    <button data-nav="courses" onclick="go('courses')" class="navidle px-3 py-2 rounded-lg text-xs whitespace-nowrap">Courses</button>
+    <button data-nav="attendance" onclick="go('attendance')" class="navidle px-3 py-2 rounded-lg text-xs whitespace-nowrap">Attendance</button>
+    <button data-nav="members" onclick="go('members')" class="navidle px-3 py-2 rounded-lg text-xs whitespace-nowrap">Members</button>
+    <button data-nav="admin" onclick="go('admin')" id="adminNavMobile" class="navidle px-3 py-2 rounded-lg text-xs whitespace-nowrap hidden">Admin</button>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto p-4 md:p-7">
+  <div id="view-dashboard" class="view fade space-y-6">
+    <div class="rounded-3xl border border-white/10 overflow-hidden relative p-7 md:p-10 bg-gradient-to-br from-white/[.09] to-transparent">
+      <div class="absolute right-5 top-3 text-[130px] opacity-[.035]">✦</div>
+      <div class="text-xs uppercase tracking-[.3em] text-neutral-500">Club operations</div>
+      <h1 class="text-3xl md:text-5xl font-black tracking-tight mt-2">Welcome back, <span id="heroName">Astronomer</span>.</h1>
+      <p class="text-neutral-400 max-w-2xl mt-4 leading-7">Your club programs, courses, attendance and member information are synchronized here.</p>
+      <div class="flex flex-wrap gap-2 mt-6">
+        <button onclick="go('calendar')" class="primary px-4 py-2.5 rounded-xl text-xs font-bold">Open calendar</button>
+        <button onclick="go('attendance')" class="secondary px-4 py-2.5 rounded-xl text-xs">My attendance</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="card rounded-2xl p-5 stat"><div class="text-xs text-neutral-500">Upcoming</div><div id="statSessions" class="text-3xl font-black mt-3">0</div><div class="text-[10px] text-neutral-600 mt-1">scheduled programs</div></div>
+      <div class="card rounded-2xl p-5 stat"><div class="text-xs text-neutral-500">Courses</div><div id="statCourses" class="text-3xl font-black mt-3">0</div><div class="text-[10px] text-neutral-600 mt-1">active club courses</div></div>
+      <div class="card rounded-2xl p-5 stat"><div class="text-xs text-neutral-500">Members</div><div id="statMembers" class="text-3xl font-black mt-3">0</div><div class="text-[10px] text-neutral-600 mt-1">registered profiles</div></div>
+      <div class="card rounded-2xl p-5 stat"><div class="text-xs text-neutral-500">My attendance</div><div id="statAttendance" class="text-3xl font-black mt-3">0%</div><div class="text-[10px] text-neutral-600 mt-1">participation rate</div></div>
+    </div>
+
+    <div class="grid lg:grid-cols-[1.6fr_1fr] gap-5">
+      <div class="card rounded-3xl p-6">
+        <div class="flex justify-between items-center mb-5"><div><h2 class="font-black text-lg">Next programs</h2><p class="text-xs text-neutral-500 mt-1">Only real sessions from the club schedule.</p></div><button onclick="go('calendar')" class="text-xs text-neutral-400 hover:text-white">View all →</button></div>
+        <div id="nextPrograms" class="space-y-3"></div>
+      </div>
+      <div class="card rounded-3xl p-6">
+        <h2 class="font-black text-lg">Your account</h2>
+        <div class="mt-5 space-y-3 text-xs">
+          <div class="flex justify-between border-b border-white/10 pb-3"><span class="text-neutral-500">Email</span><span id="accountEmail" class="max-w-[60%] truncate"></span></div>
+          <div class="flex justify-between border-b border-white/10 pb-3"><span class="text-neutral-500">Role</span><span id="accountRole">Member</span></div>
+          <div class="flex justify-between"><span class="text-neutral-500">Verification</span><span id="verifyStatus">Pending</span></div>
+        </div>
+        <button onclick="sendVerification()" id="verifyButton" class="secondary w-full mt-5 py-2.5 rounded-xl text-xs">Send verification email</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-calendar" class="view hidden fade space-y-5">
+    <div class="flex items-end justify-between gap-3"><div><div class="text-xs uppercase tracking-[.25em] text-neutral-500">Schedule</div><h1 class="text-3xl font-black mt-1">Club Calendar</h1></div><div class="flex gap-2"><button onclick="changeMonth(-1)" class="secondary px-3 py-2 rounded-xl">←</button><button onclick="changeMonth(1)" class="secondary px-3 py-2 rounded-xl">→</button></div></div>
+    <div class="card rounded-3xl p-4 md:p-6 overflow-hidden">
+      <div class="flex items-center justify-between mb-5"><h2 id="calendarTitle" class="font-black text-lg"></h2><span class="text-xs text-neutral-500">Programs and reminders</span></div>
+      <div class="grid grid-cols-7 text-[10px] uppercase tracking-widest text-neutral-600 mb-2"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
+      <div id="calendarGrid" class="calendar-grid rounded-xl overflow-hidden"></div>
+    </div>
+  </div>
+
+  <div id="view-courses" class="view hidden fade space-y-5">
+    <div><div class="text-xs uppercase tracking-[.25em] text-neutral-500">Learning</div><h1 class="text-3xl font-black mt-1">Club Courses</h1><p class="text-neutral-500 text-sm mt-2">Schedules can only reference courses that exist here.</p></div>
+    <div id="coursesGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+  </div>
+
+  <div id="view-attendance" class="view hidden fade space-y-5">
+    <div><div class="text-xs uppercase tracking-[.25em] text-neutral-500">Participation</div><h1 class="text-3xl font-black mt-1">Attendance</h1><p class="text-neutral-500 text-sm mt-2">Your attendance is linked to your Supabase account, not an email-name guess.</p></div>
+    <div class="card rounded-3xl overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead class="bg-white/[.03] text-[10px] uppercase tracking-widest text-neutral-500"><tr><th class="p-4">Program</th><th class="p-4">Date</th><th class="p-4">Member</th><th class="p-4">Status</th></tr></thead><tbody id="attendanceRows"></tbody></table></div></div>
+  </div>
+
+  <div id="view-members" class="view hidden fade space-y-5">
+    <div><div class="text-xs uppercase tracking-[.25em] text-neutral-500">People</div><h1 class="text-3xl font-black mt-1">Club Members</h1><p class="text-neutral-500 text-sm mt-2">Profiles registered in the HMA Astra system.</p></div>
+    <div id="membersGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+  </div>
+
+  <div id="view-admin" class="view hidden fade space-y-6">
+    <div class="flex items-end justify-between"><div><div class="text-xs uppercase tracking-[.25em] text-neutral-500">Control center</div><h1 class="text-3xl font-black mt-1">Admin</h1><p class="text-neutral-500 text-sm mt-2">Create only valid club courses and programs.</p></div><span class="badge px-3 py-2 rounded-xl text-xs">Admin access</span></div>
+    <div class="grid lg:grid-cols-2 gap-5">
+      <form onsubmit="createCourse(event)" class="card rounded-3xl p-6 space-y-4">
+        <div><h2 class="font-black text-lg">Add course</h2><p class="text-xs text-neutral-500 mt-1">The course becomes selectable in schedule creation.</p></div>
+        <input id="courseName" required placeholder="e.g. Observational Astronomy">
+        <input id="courseInstructor" required placeholder="Instructor / officer">
+        <textarea id="courseDescription" rows="3" placeholder="Course description"></textarea>
+        <button class="primary w-full py-3 rounded-xl font-bold text-sm">Create course</button>
+      </form>
+      <form onsubmit="createSession(event)" class="card rounded-3xl p-6 space-y-4">
+        <div><h2 class="font-black text-lg">Add program / session</h2><p class="text-xs text-neutral-500 mt-1">The course dropdown is populated from real club courses.</p></div>
+        <input id="sessionTitle" required placeholder="Program title">
+        <select id="sessionCourse" required></select>
+        <div class="grid grid-cols-2 gap-3"><input id="sessionStart" type="datetime-local" required><input id="sessionEnd" type="datetime-local" required></div>
+        <input id="sessionLocation" required placeholder="Location">
+        <textarea id="sessionDescription" rows="3" placeholder="Description"></textarea>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="badge rounded-xl p-3 text-xs"><input id="notifyMembers" type="checkbox" class="w-auto mr-2">Queue email notice</label>
+          <label class="badge rounded-xl p-3 text-xs"><input id="createReminder" type="checkbox" class="w-auto mr-2">Create 24h reminder</label>
+        </div>
+        <button class="primary w-full py-3 rounded-xl font-bold text-sm">Publish program</button>
+      </form>
+    </div>
+    <div class="card rounded-3xl p-6">
+      <div class="flex justify-between items-center mb-4"><div><h2 class="font-black text-lg">Role management</h2><p class="text-xs text-neutral-500 mt-1">Only administrators can promote club members.</p></div></div>
+      <div id="roleRows" class="space-y-2"></div>
+    </div>
+  </div>
+</main>
+</section>
+
+<div id="toast" class="fixed right-4 bottom-4 z-50 hidden max-w-sm"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SUPABASE_URL = "https://yzhrhexbrfshlmakpamt.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_MI3mhTPMYDGBNY-VTkREMA_IAd-mfTy";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+let demo=false,currentUser=null,currentProfile=null,booting=false;
+let courses=[],sessions=[],members=[],attendance=[];
+let calDate=new Date();
+
+window.addEventListener("error", e => {
+  try { toast(e.error?.message || e.message || "The website encountered an error.", "err"); } catch (_) {}
+});
+window.addEventListener("unhandledrejection", e => {
+  try { toast(e.reason?.message || String(e.reason || "Unexpected error."), "err"); } catch (_) {}
+});
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+const fmt=d=>{const x=new Date(d);return isNaN(x)?String(d):x.toLocaleString([], {dateStyle:"medium",timeStyle:"short"})};
+const iso=d=>new Date(d);
+const isManager=()=>demo||currentProfile?.role==="Admin"||currentProfile?.role==="Officer";
+const isAdmin=()=>demo||currentProfile?.role==="Admin";
+
+for(let i=0;i<90;i++){let s=document.createElement("i");s.className="star";s.style.left=Math.random()*100+"%";s.style.top=Math.random()*100+"%";s.style.animationDelay=Math.random()*3+"s";$("stars").appendChild(s)}
+$("firebaseState").textContent="Supabase connection: ready";
+
+window.authMode=m=>{ $("loginForm").classList.toggle("hidden",m!=="login");$("registerForm").classList.toggle("hidden",m!=="register");$("loginTab").className="py-2 rounded-lg text-sm "+(m==="login"?"navactive":"navidle");$("registerTab").className="py-2 rounded-lg text-sm "+(m==="register"?"navactive":"navidle") };
+window.toast=(msg,type="ok")=>{let t=$("toast");t.innerHTML=`<div class="card rounded-2xl p-4 border ${type==="err"?"border-red-500/30":"border-white/20"}"><div class="text-sm">${esc(msg)}</div></div>`;t.classList.remove("hidden");setTimeout(()=>t.classList.add("hidden"),3500)};
+
+async function getProfile(uid){
+  const {data,error}=await supabase.from("profiles").select("*").eq("id",uid).maybeSingle();
+  if(error)throw error;
+  if(data)return data;
+  const name=currentUser?.user_metadata?.full_name || currentUser?.email?.split("@")[0] || "Member";
+  const {data:created,error:ce}=await supabase.from("profiles").insert({id:uid,full_name:name,email:currentUser.email,role:"Member"}).select().single();
+  if(ce)throw ce;
+  return created;
+}
+
+window.login=async e=>{
+  e.preventDefault();
+  try{
+    const {data,error}=await supabase.auth.signInWithPassword({email:$("loginEmail").value.trim(),password:$("loginPassword").value});
+    if(error)throw error; currentUser=data.user; await boot(false);
+  }catch(x){toast(x.message||"Sign in failed.","err")}
+};
+
+window.register=async e=>{
+  e.preventDefault();
+  try{
+    const name=$("regName").value.trim(),email=$("regEmail").value.trim(),password=$("regPassword").value;
+    if(name.length<2)return toast("Please enter your full name.","err");
+    if(password.length<6)return toast("Password must be at least 6 characters.","err");
+    const {data,error}=await supabase.auth.signUp({email,password,options:{data:{full_name:name},emailRedirectTo:window.location.origin+window.location.pathname}});
+    if(error)throw error;
+    currentUser=data.user;
+    if(data.session){
+      const {error:pe}=await supabase.from("profiles").upsert({id:data.user.id,full_name:name,email,role:"Member"});
+      if(pe)throw pe;
+      toast("Account created successfully. Loading your account…"); await boot(false);
+    }else{
+      toast("Account created. Check your email to confirm your HMA Astra account.");
+      window.authMode("login");
+    }
+  }catch(x){toast(x.message||"Registration failed.","err")}
+};
+
+window.resetPassword=async()=>{
+  const email=$("loginEmail").value.trim();
+  if(!email)return toast("Enter your email first.","err");
+  try{
+    const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname});
+    if(error)throw error; toast("Password reset email sent.");
+  }catch(x){toast(x.message||"Password reset failed.","err")}
+};
+
+window.sendVerification=async()=>{
+  if(demo||!currentUser)return;
+  try{
+    const {error}=await supabase.auth.resend({type:"signup",email:currentUser.email});
+    if(error)throw error; toast("Verification email sent.");
+  }catch(x){toast(x.message||"Could not send verification email.","err")}
+};
+
+window.logout=async()=>{if(!demo)await supabase.auth.signOut();demo=false;currentUser=null;currentProfile=null;$("app").classList.add("hidden");$("auth").classList.remove("hidden")};
+
+window.demoLogin=async()=>{
+  demo=true;currentUser={id:"demo-user",email:"demo@hma.edu",email_confirmed_at:new Date().toISOString()};
+  currentProfile={id:"demo-user",full_name:"Demo Astronomer",email:"demo@hma.edu",role:"Admin"};seedDemo();showApp();
+};
+
+function seedDemo(){
+  courses=[
+    {id:"c1",name:"Observational Astronomy",instructor:"HMA Astra Officers",description:"Sky observation, telescope operation and night-sky planning."},
+    {id:"c2",name:"Astrophotography",instructor:"HMA Astra Officers",description:"Camera settings, stacking, framing and processing."},
+    {id:"c3",name:"Space Science",instructor:"HMA Astra Club",description:"Planetary science, spacecraft and exploration missions."}
+  ];
+  const now=new Date();
+  sessions=[1,2,3,4].map((n,i)=>{let d=new Date(now);d.setDate(d.getDate()+i+2);d.setHours(17+i,30,0,0);return{id:"s"+n,title:["Telescope Training","Astrophotography Basics","Planetary Science Seminar","Night Sky Observation"][i],course_id:courses[i%3].id,starts_at:d.toISOString(),end_at:new Date(d.getTime()+90*60000).toISOString(),location:["Observatory Courtyard","Science Lab","Room 204","Observatory"][i],description:"HMA Astra scheduled club program."}});
+  members=[{id:"demo-user",full_name:"Demo Astronomer",email:"demo@hma.edu",role:"Admin"},{id:"m2",full_name:"Mekdes Orbit",email:"mekdes@hma.edu",role:"Officer"},{id:"m3",full_name:"Samuel Cosmos",email:"samuel@hma.edu",role:"Member"},{id:"m4",full_name:"Liya Nova",email:"liya@hma.edu",role:"Member"}];
+  attendance=[{id:"a1",session_id:"s1",user_id:"demo-user",status:"Present",checked_at:new Date().toISOString()}];
+}
+
+async function boot(isDemo){
+  if(isDemo){showApp();return}
+  if(booting || !currentUser)return;
+  booting=true;
+  try{
+    currentProfile=await getProfile(currentUser.id);
+    showApp();
+    await loadData();
+  }catch(x){
+    console.error(x);
+    toast(x.message||"Could not load your HMA Astra profile.","err");
+  }finally{booting=false;}
+}
+
+async function loadData(){
+  const [c,s,m,a]=await Promise.all([
+    supabase.from("courses").select("*").order("name"),
+    supabase.from("sessions").select("*").order("starts_at"),
+    supabase.from("profiles").select("*").order("full_name"),
+    supabase.from("attendance").select("*").order("checked_at",{ascending:false})
+  ]);
+  for(const r of [c,s,m,a])if(r.error)throw r.error;
+  courses=c.data||[];sessions=s.data||[];members=m.data||[];attendance=a.data||[];renderAll();
+}
+
+function showApp(){
+  $("auth").classList.add("hidden");$("app").classList.remove("hidden");
+  $("topName").textContent=currentProfile.full_name||"Member";$("topRole").textContent=currentProfile.role;
+  $("heroName").textContent=(currentProfile.full_name||"Astronomer").split(" ")[0];
+  $("accountEmail").textContent=currentProfile.email;$("accountRole").textContent=currentProfile.role;
+  $("verifyStatus").textContent=demo||currentUser?.email_confirmed_at?"Verified":"Pending";
+  $("adminNav").classList.toggle("hidden",!isManager());$("adminNavMobile").classList.toggle("hidden",!isManager());renderAll();
+}
+
+window.go=page=>{
+  if(page==="admin"&&!isManager())return toast("Admin or Officer access required.","err");
+  document.querySelectorAll(".view").forEach(x=>x.classList.add("hidden"));$("view-"+page).classList.remove("hidden");
+  document.querySelectorAll("[data-nav]").forEach(b=>b.className=(b.dataset.nav===page?"navactive":"navidle")+" px-3 py-2 rounded-lg text-xs whitespace-nowrap");renderAll();
+};
+
+function renderAll(){
+  if(!currentProfile)return;
+  $("statSessions").textContent=sessions.filter(s=>iso(s.starts_at)>=new Date()).length;
+  $("statCourses").textContent=courses.length;$("statMembers").textContent=members.length;
+  const mine=attendance.filter(a=>a.user_id===currentUser.id),past=sessions.filter(s=>iso(s.starts_at)<new Date()).length;
+  $("statAttendance").textContent=past?Math.round((mine.filter(a=>a.status==="Present").length/past)*100)+"%":"0%";
+  renderNext();renderCourses();renderAttendance();renderMembers();renderCalendar();renderAdmin();
+}
+function courseName(id){return courses.find(c=>c.id===id)?.name||"Unknown course"}
+
+function renderNext(){
+  const arr=sessions.filter(s=>iso(s.starts_at)>=new Date()).slice(0,4);
+  $("nextPrograms").innerHTML=arr.length?arr.map(s=>`<div class="card rounded-2xl p-4"><div class="flex justify-between gap-3"><div><div class="text-[10px] uppercase tracking-widest text-neutral-500">${esc(courseName(s.course_id))}</div><div class="font-bold mt-1">${esc(s.title)}</div></div><span class="badge rounded-lg px-2 py-1 text-[10px] h-fit">${esc(new Date(s.starts_at).toLocaleDateString())}</span></div><div class="text-xs text-neutral-500 mt-3">${esc(s.location)} · ${esc(new Date(s.starts_at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}))}</div><button onclick="markAttendance('${s.id}')" class="secondary mt-3 px-3 py-2 rounded-lg text-xs">Mark attendance</button></div>`).join(""):`<div class="text-sm text-neutral-500 p-5 text-center">No upcoming programs.</div>`;
+}
+function renderCourses(){$("coursesGrid").innerHTML=courses.map(c=>`<div class="card rounded-3xl p-6"><div class="w-10 h-10 rounded-xl bg-white text-black flex items-center justify-center font-black">✦</div><h3 class="font-black mt-5">${esc(c.name)}</h3><p class="text-xs text-neutral-500 mt-1">${esc(c.instructor||"HMA Astra")}</p><p class="text-sm text-neutral-400 mt-4 leading-6">${esc(c.description||"")}</p></div>`).join("")||`<div class="text-sm text-neutral-500">No courses have been created yet.</div>`}
+function renderAttendance(){
+  const rows=attendance.filter(a=>isAdmin()||a.user_id===currentUser.id);
+  $("attendanceRows").innerHTML=rows.map(a=>{const s=sessions.find(x=>x.id===a.session_id),m=members.find(x=>x.id===a.user_id);return`<tr class="border-t border-white/10"><td class="p-4 font-semibold">${esc(s?.title||"Program")}</td><td class="p-4 text-xs text-neutral-500">${esc(a.checked_at?new Date(a.checked_at).toLocaleDateString():"—")}</td><td class="p-4">${esc(m?.full_name||"Member")}</td><td class="p-4"><span class="badge rounded-full px-2 py-1 text-xs">${esc(a.status||"Present")}</span></td></tr>`}).join("")||`<tr><td colspan="4" class="p-8 text-center text-neutral-500">No attendance records.</td></tr>`;
+}
+function renderMembers(){$("membersGrid").innerHTML=members.map(m=>`<div class="card rounded-2xl p-5"><div class="flex items-center gap-3"><div class="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center font-black">${esc((m.full_name||"A")[0].toUpperCase())}</div><div class="min-w-0"><div class="font-bold text-sm truncate">${esc(m.full_name||"Member")}</div><div class="text-xs text-neutral-500">${esc(m.role||"Member")}</div></div></div><div class="text-xs text-neutral-600 mt-4 truncate">${esc(m.email||"")}</div></div>`).join("")||`<div class="text-sm text-neutral-500">No members.</div>`}
+function renderCalendar(){
+  const y=calDate.getFullYear(),m=calDate.getMonth();$("calendarTitle").textContent=new Date(y,m,1).toLocaleDateString([], {month:"long",year:"numeric"});
+  const first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();let cells="";
+  for(let i=0;i<first;i++)cells+=`<div class="calcell bg-black/20"></div>`;
+  for(let d=1;d<=days;d++){let daySessions=sessions.filter(s=>{let x=iso(s.starts_at);return x.getFullYear()===y&&x.getMonth()===m&&x.getDate()===d});cells+=`<div class="calcell bg-black/20"><div class="text-xs font-bold">${d}</div>${daySessions.map(s=>`<button onclick="markAttendance('${s.id}')" class="cal-event w-full text-left mt-2 bg-white text-black rounded-lg px-2 py-1 truncate">${esc(s.title)}</button>`).join("")}</div>`}
+  $("calendarGrid").innerHTML=cells;
+}
+window.changeMonth=n=>{calDate.setMonth(calDate.getMonth()+n);renderCalendar()};
+
+function renderAdmin(){
+  if(!isManager())return;
+  $("sessionCourse").innerHTML=courses.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("")||`<option value="">Create a course first</option>`;
+  $("roleRows").innerHTML=members.map(m=>`<div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border border-white/10 rounded-xl p-3"><div><b class="text-sm">${esc(m.full_name)}</b><div class="text-xs text-neutral-600">${esc(m.email)}</div></div><select onchange="changeRole('${esc(m.id)}',this.value)" class="md:w-40"><option ${m.role==="Member"?"selected":""}>Member</option><option ${m.role==="Officer"?"selected":""}>Officer</option><option ${m.role==="Admin"?"selected":""}>Admin</option></select></div>`).join("");
+}
+
+window.createCourse=async e=>{
+  e.preventDefault();if(!isManager())return;
+  const data={name:$("courseName").value.trim(),instructor:$("courseInstructor").value.trim(),description:$("courseDescription").value.trim()};
+  try{if(demo){courses.push({id:"c"+Date.now(),...data});e.target.reset();renderAll();return toast("Course created in demo mode.")}const {error}=await supabase.from("courses").insert(data);if(error)throw error;e.target.reset();await loadData();toast("Course created.")}catch(x){toast(x.message||"Could not create course.","err")}
+};
+
+window.createSession=async e=>{
+  e.preventDefault();if(!isManager())return;
+  const courseId=$("sessionCourse").value;if(!courses.some(c=>c.id===courseId))return toast("Choose a real club course.","err");
+  const data={title:$("sessionTitle").value.trim(),course_id:courseId,starts_at:new Date($("sessionStart").value).toISOString(),end_at:new Date($("sessionEnd").value).toISOString(),location:$("sessionLocation").value.trim(),description:$("sessionDescription").value.trim(),created_by:currentUser.id};
+  try{
+    if(demo){sessions.push({id:"s"+Date.now(),...data});e.target.reset();renderAll();return toast("Program published in demo mode.")}
+    const {data:created,error}=await supabase.from("sessions").insert(data).select().single();if(error)throw error;
+    if($("createReminder").checked){const r=await supabase.from("reminders").insert({session_id:created.id,send_at:new Date(new Date(data.starts_at).getTime()-86400000).toISOString(),sent:false});if(r.error)throw r.error}
+    e.target.reset();await loadData();toast("Program published.");
+  }catch(x){toast(x.message||"Could not publish program.","err")}
+};
+
+window.markAttendance=async id=>{
+  const s=sessions.find(x=>x.id===id);if(!s)return;
+  if(attendance.some(a=>a.session_id===id&&a.user_id===currentUser.id))return toast("You already marked attendance for this program.");
+  try{
+    if(demo){attendance.push({id:"a"+Date.now(),session_id:id,user_id:currentUser.id,status:"Present",checked_at:new Date().toISOString()});renderAll();return toast("Attendance recorded.")}
+    const {error}=await supabase.from("attendance").insert({session_id:id,user_id:currentUser.id,status:"Present"});if(error)throw error;await loadData();toast("Attendance recorded.");
+  }catch(x){toast(x.message||"Could not record attendance.","err")}
+};
+
+window.changeRole=async(uid,role=>{
+  if(!isAdmin())return;if(uid===currentUser.id&&role!=="Admin")return toast("Keep your own Admin role while managing the system.","err");
+  try{if(demo){let m=members.find(x=>x.id===uid);if(m)m.role=role;renderAll();return toast("Role changed in demo mode.")}const {error}=await supabase.from("profiles").update({role}).eq("id",uid);if(error)throw error;await loadData();toast("Role updated.")}catch(x){toast(x.message||"Could not update role.","err")}
+});
+
+supabase.auth.onAuthStateChange((event,session)=>{
+  if(demo)return;
+  if(session?.user){
+    currentUser=session.user;
+    setTimeout(()=>boot(false),0);
+  }else if(event === "SIGNED_OUT"){
+    currentUser=null; currentProfile=null;
+    $("app").classList.add("hidden"); $("auth").classList.remove("hidden");
+  }
+});
+
+(async function start(){
+  try{
+    const {data,error}=await supabase.auth.getSession();
+    if(error)throw error;
+    if(data.session?.user){currentUser=data.session.user;await boot(false);}
+    else{$("auth").classList.remove("hidden");$("app").classList.add("hidden");}
+  }catch(x){
+    console.error(x);
+    $("auth").classList.remove("hidden");
+    toast(x.message||"Supabase could not be reached. Check your connection.","err");
+  }
+})();
+if(location.search.includes("preview=1"))demoLogin();
+</script>
+</body>
+</html>
